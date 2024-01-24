@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  tensorflow:
+    image: tensorflow/tensorflow:2.10.1-gpu-jupyter
+    ports:
+      - "18888:8888"
+    volumes:
+      - ./notebooks:/tf/notebooks
+    command: jupyter notebook --ip 0.0.0.0 --allow-root --notebook-dir=/tf/notebooks
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
