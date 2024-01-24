@@ -1,6 +1,7 @@
 import requests
 import json
 from datetime import datetime
+import pandas as pd
 
 dev_host = "http://127.0.0.1:18088"
 dev_docker_host = "http://host.docker.internal:18088"
@@ -60,3 +61,28 @@ def get_kline_histroy(url=prod_kline_history_url, code="SPY", start="2023-07-25"
 
     response = requests.request("POST", url, headers=headers, data=payload)
     return json.loads(response.text)
+
+
+def his_to_df(his):
+    # 创建一个DataFrame:
+    df = pd.DataFrame(his)
+
+    # 转换’date’列为pandas的Datetime类型:
+    df['date'] = pd.to_datetime(df['date'])
+
+    # 设置date列为索引:
+    df.set_index('date', inplace=True)
+
+    # 按日期升序排序（如果数据未按日期排序的话）:
+    df.sort_index(inplace=True)
+    return df
+
+
+def plot_Y_prediction_and_kline(Y_prediction, df, th = 0.75, color='g'):
+    predictions_series = pd.Series(Y_prediction.flatten(), index=df.index)
+
+    signals = np.full(df.shape[0], np.nan)  # 含 NaN 的数组，与 df 的长度一致
+    signals[predictions_series > th] = df['high'][predictions_series > th] * 1.01
+    markers = mpf.make_addplot(signals, type='scatter', markersize=100, marker='^', color=color)
+
+    mpf.plot(df, type='candle', style='charles', addplot=markers, volume=True, figsize=(24, 16))
