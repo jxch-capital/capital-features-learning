@@ -10,6 +10,7 @@ from tensorflow.keras import regularizers
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras import backend as K
+import json
 
 
 def to_dataset(train_data, validation_data, Y_train, Y_val, batch=64):
@@ -81,7 +82,7 @@ def max_acc(y_true, y_pred):
     return custom_score
 
 
-def get_model(x_shape=5, y_shape=40):
+def get_model(x_shape=5, y_shape=40, learning_rate=1e-3):
     model = Sequential([
         tf.keras.layers.InputLayer(input_shape=(x_shape, y_shape)),
         LSTM(128, return_sequences=True, kernel_regularizer=l2(0.001)),
@@ -97,9 +98,9 @@ def get_model(x_shape=5, y_shape=40):
 
     model.summary()
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss='binary_crossentropy',
-        metrics=['accuracy', 'Precision', 'Recall', max_acc]
+        metrics=['accuracy', 'Precision', 'Recall']
     )
 
     early_stopping = EarlyStopping(
@@ -114,8 +115,15 @@ def get_model(x_shape=5, y_shape=40):
         mode='min',
         factor=0.5,
         patience=4,
-        min_lr=1e-5,
+        min_lr=1e-6,
         verbose=1
     )
 
     return model, [early_stopping, reduce_lr]
+
+
+def save_scaler(path, scaler):
+    mean_up = scaler.mean_
+    var_up = scaler.var_
+    with open(path, 'w') as f_out:
+        json.dump({'mean': mean_up.tolist(), 'var': var_up.tolist()}, f_out)

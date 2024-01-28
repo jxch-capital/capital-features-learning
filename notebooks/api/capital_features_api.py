@@ -45,7 +45,7 @@ def get_train_data(train_api=prod_train_data_url, train_config_id=35602):
     })
 
     response = requests.request("POST", train_api, headers=headers, data=payload)
-    json_res = json.loads(response.text)
+    json_res = response.json()
     return json_res['knodeTrains']
 
 
@@ -60,7 +60,7 @@ def get_kline_histroy(url=prod_kline_history_url, code="SPY", start="2023-07-25"
     })
 
     response = requests.request("POST", url, headers=headers, data=payload)
-    return json.loads(response.text)
+    return response.json()
 
 
 def his_to_df(his):
