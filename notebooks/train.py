@@ -1,4 +1,6 @@
 import tensorflow as tf
+from tensorflow.python.keras.callbacks import ModelCheckpoint
+
 import api.capital_features_api as cf
 import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
@@ -82,7 +84,7 @@ def max_acc(y_true, y_pred):
     return custom_score
 
 
-def get_model(x_shape=5, y_shape=40, learning_rate=1e-3):
+def get_model(x_shape=5, y_shape=40, model_name="train"):
     model = Sequential([
         tf.keras.layers.InputLayer(input_shape=(x_shape, y_shape)),
         LSTM(128, return_sequences=True, kernel_regularizer=l2(0.001)),
@@ -98,11 +100,12 @@ def get_model(x_shape=5, y_shape=40, learning_rate=1e-3):
 
     model.summary()
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        optimizer=tf.keras.optimizers.Adam(),
         loss='binary_crossentropy',
         metrics=['accuracy', 'Precision', 'Recall']
     )
 
+    # 创建EarlyStopping和ReduceLROnPlateau回调
     early_stopping = EarlyStopping(
         monitor='val_loss',
         mode='min',
@@ -114,12 +117,23 @@ def get_model(x_shape=5, y_shape=40, learning_rate=1e-3):
         monitor='val_loss',
         mode='min',
         factor=0.5,
-        patience=4,
+        patience=10,
         min_lr=1e-6,
         verbose=1
     )
 
-    return model, [early_stopping, reduce_lr]
+    # 创建ModelCheckpoint回调
+    model_checkpoint = ModelCheckpoint(
+        filepath='./epoch/' + model_name + '/epoch_{epoch:02d}.ckpt',
+        monitor='val_loss',
+        verbose=1,
+        save_best_only=True,
+        save_weights_only=True,
+        mode='min',
+    )
+
+    # 返回模型和回调列表
+    return model, [early_stopping, reduce_lr, model_checkpoint]
 
 
 def save_scaler(path, scaler):
