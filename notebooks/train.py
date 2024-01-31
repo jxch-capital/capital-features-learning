@@ -6,13 +6,14 @@ import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization, InputLayer, GRU
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, CSVLogger
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import regularizers
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras import backend as K
 import json
+import tf_util as tu
 
 
 def to_dataset(train_data, validation_data, Y_train, Y_val, batch=64):
@@ -118,7 +119,7 @@ def get_model(x_shape=5, y_shape=40, model_name="train"):
         mode='min',
         factor=0.5,
         patience=6,
-        min_lr=1e-5,
+        min_lr=1e-6,
         verbose=1
     )
 
@@ -132,11 +133,30 @@ def get_model(x_shape=5, y_shape=40, model_name="train"):
         mode='min',
     )
 
+    csv_logger = CSVLogger('./log/' + model_name + '.csv', append=True)
+
     # 返回模型和回调列表
-    return model, [early_stopping, reduce_lr, model_checkpoint]
+    return model, [early_stopping, reduce_lr, model_checkpoint, csv_logger]
 
 
-def save_scaler(path, scaler):
+import sys
+
+
+def fit2log_txt(model, train_dataset, validation_dataset, callbacks, weights, log_path):
+    with open(log_path, 'a') as log_file:
+        original_stdout = sys.stdout
+        try:
+            sys.stdout = log_file
+            his = model.fit(train_dataset, epochs=1000, validation_data=validation_dataset,
+                            verbose=2, callbacks=callbacks, class_weight=weights,
+                            initial_epoch=tu.find_last_epoch_txt_log(log_path) + 1)
+        finally:
+            sys.stdout = original_stdout
+
+    return his
+
+
+def save_scaler(scaler, path):
     mean_up = scaler.mean_
     var_up = scaler.var_
     with open(path, 'w') as f_out:
