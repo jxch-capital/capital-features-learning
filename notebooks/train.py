@@ -16,6 +16,16 @@ import json
 import tf_util as tu
 
 
+def to_test_dataset(test_data, y_test, scaler, batch_size=64):
+    x_test = np.array(test_data['featuresT'])
+    num_samples, num_timesteps, num_features = x_test.shape
+    x_test_reshaped = x_test.reshape(-1, num_features)
+    x_test_scaled = scaler.transform(x_test_reshaped).reshape(num_samples, num_timesteps, num_features)
+    test_dataset = tf.data.Dataset.from_tensor_slices((x_test_scaled, y_test))
+    test_dataset = test_dataset.batch(batch_size)
+    return test_dataset
+
+
 def to_dataset(train_data, validation_data, Y_train, Y_val, batch=64):
     scaler = StandardScaler()
     X_train = np.array(train_data['featuresT'])
@@ -161,3 +171,66 @@ def save_scaler(scaler, path):
     var_up = scaler.var_
     with open(path, 'w') as f_out:
         json.dump({'mean': mean_up.tolist(), 'var': var_up.tolist()}, f_out)
+
+
+class CustomSelectiveAccuracy(tf.keras.metrics.Metric):
+    def __init__(self, name='custom_selective_accuracy', threshold=0.5, **kwargs):
+        super(CustomSelectiveAccuracy, self).__init__(name=name, **kwargs)
+        self.threshold = threshold
+        self.correct_count = self.add_weight(name='correct_count', initializer='zeros')
+        self.total_count = self.add_weight(name='total_count', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # 根据阈值确定是否给出确定预测
+        y_pred_classes = tf.where(y_pred >= self.threshold, 1.0, 0.0)
+        y_true_classes = tf.cast(y_true, 'float32')
+
+        # 根据确定性阈值筛选出确定的预测
+        is_determined = tf.logical_or(y_pred >= self.threshold, y_pred <= (1 - self.threshold))
+
+        # 计算确定预测中准确的数量
+        correct_predictions = tf.cast(tf.equal(y_pred_classes, y_true_classes), 'float32') * tf.cast(is_determined,
+                                                                                                     'float32')
+
+        self.correct_count.assign_add(tf.reduce_sum(correct_predictions))
+        self.total_count.assign_add(tf.reduce_sum(tf.cast(is_determined, 'float32')))
+
+    def result(self):
+        return self.correct_count / self.total_count
+
+    def reset_state(self):
+        self.correct_count.assign(0.)
+        self.total_count.assign(0.)
+
+    def get_correct_predictions(self):
+        return self.correct_count
+
+
+def evaluate(thresholds, model_ud, test_dataset):
+    # 准备收集准确率和损失值
+    accuracies = []
+    losses = []
+    correct_predictions = []
+
+    for thresh in thresholds:
+        # 定义一个新的指标实例
+        custom_acc = CustomSelectiveAccuracy(threshold=thresh)
+
+        # 使用自定义的准确率指标来编译模型
+        model_ud.compile(optimizer='adam',
+                         loss='binary_crossentropy',
+                         metrics=[custom_acc])
+
+        # 评估模型
+        result = model_ud.evaluate(test_dataset, verbose=1)
+
+        # 收集损失值和准确率
+        losses.append(result[0])
+        accuracies.append(result[1])
+        correct_predictions.append(custom_acc.get_correct_predictions())
+
+    return {
+        'accuracies': accuracies,
+        'losses': losses,
+        'correct_predictions': correct_predictions,
+    }
