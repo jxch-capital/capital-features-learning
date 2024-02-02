@@ -43,7 +43,7 @@ def to_dataset(train_data, validation_data, Y_train, Y_val, batch=64):
 
 
 def to_prediction_scaled(prediction_data, scaler):
-    X_prediction = np.array(prediction_data['knodeTrains']['featuresT'])
+    X_prediction = np.array(prediction_data['featuresT'])
     num_samples_prediction, num_timesteps_prediction, num_features_prediction = X_prediction.shape
     X_prediction_reshaped = X_prediction.reshape(-1, num_features_prediction)
     X_prediction_scaled = scaler.transform(X_prediction_reshaped).reshape(num_samples_prediction,
@@ -84,7 +84,7 @@ def max_acc(y_true, y_pred):
     return custom_score
 
 
-def get_model(x_shape=5, y_shape=40, model_name="train"):
+def get_model(x_shape=5, y_shape=40, model_name="train", lr=0.001):
     model = Sequential([
         tf.keras.layers.InputLayer(input_shape=(x_shape, y_shape)),
         LSTM(128, return_sequences=True, kernel_regularizer=l2(0.001)),
@@ -100,7 +100,7 @@ def get_model(x_shape=5, y_shape=40, model_name="train"):
 
     model.summary()
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
         loss='binary_crossentropy',
         metrics=['accuracy', 'Precision', 'Recall']
     )

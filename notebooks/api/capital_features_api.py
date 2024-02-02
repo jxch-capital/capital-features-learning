@@ -36,7 +36,8 @@ def get_prediction_data(prediction_api=prod_prediction_data_url, train_config_id
     })
 
     response = requests.request("POST", prediction_api, headers=headers, data=payload)
-    return json.loads(response.text)
+    json_res = response.json()
+    return json_res['knodeTrains']
 
 
 def get_train_data(train_api=prod_train_data_url, train_config_id=35602):
