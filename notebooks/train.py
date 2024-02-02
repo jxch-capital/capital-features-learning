@@ -124,7 +124,7 @@ def get_model(x_shape=5, y_shape=40, model_name="train"):
 
     # 创建ModelCheckpoint回调
     model_checkpoint = ModelCheckpoint(
-        filepath='./epoch/' + model_name + '/epoch_{epoch:02d}.ckpt',
+        filepath='./checkpoint/' + model_name + '/epoch_{epoch:02d}.ckpt',
         monitor='val_loss',
         verbose=1,
         save_best_only=True,
