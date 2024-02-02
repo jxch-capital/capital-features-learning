@@ -117,8 +117,8 @@ def get_model(x_shape=5, y_shape=40, model_name="train"):
         monitor='val_loss',
         mode='min',
         factor=0.5,
-        patience=6,
-        min_lr=1e-5,
+        patience=10,
+        min_lr=1e-6,
         verbose=1
     )
 
