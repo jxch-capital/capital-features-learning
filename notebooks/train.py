@@ -17,8 +17,8 @@ import json
 
 def to_dataset(train_data, validation_data, Y_train, Y_val, batch=64):
     scaler = StandardScaler()
-    X_train = np.array(train_data['featuresT'])
-    X_val = np.array(validation_data['featuresT'])
+    X_train = np.array(train_data['features'])
+    X_val = np.array(validation_data['features'])
     # 获取形状信息
     num_samples, num_timesteps, num_features = X_train.shape
     # 将三维特征数组重塑为二维
@@ -52,7 +52,7 @@ def to_prediction_scaled_by_arr(X_prediction, scaler):
 
 
 def to_prediction_scaled(prediction_data, scaler):
-    X_prediction = np.array(prediction_data['featuresT'])
+    X_prediction = np.array(prediction_data['features'])
     num_samples_prediction, num_timesteps_prediction, num_features_prediction = X_prediction.shape
     X_prediction_reshaped = X_prediction.reshape(-1, num_features_prediction)
     X_prediction_scaled = scaler.transform(X_prediction_reshaped).reshape(num_samples_prediction,
@@ -145,7 +145,7 @@ def get_model(x_shape=5, y_shape=40, model_name="train", lr=0.001):
     return model, [early_stopping, reduce_lr, model_checkpoint]
 
 
-def save_scaler(path, scaler):
+def save_scaler(scaler, path):
     mean_up = scaler.mean_
     var_up = scaler.var_
     with open(path, 'w') as f_out:

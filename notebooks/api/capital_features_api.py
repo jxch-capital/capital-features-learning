@@ -2,6 +2,7 @@ import requests
 import json
 from datetime import datetime
 import pandas as pd
+import numpy as np
 
 dev_host = "http://127.0.0.1:18088"
 dev_docker_host = "http://host.docker.internal:18088"
