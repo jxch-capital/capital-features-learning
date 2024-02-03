@@ -42,6 +42,15 @@ def to_dataset(train_data, validation_data, Y_train, Y_val, batch=64):
     return train_dataset, validation_dataset, scaler
 
 
+def to_prediction_scaled_by_arr(X_prediction, scaler):
+    num_samples_prediction, num_timesteps_prediction, num_features_prediction = X_prediction.shape
+    X_prediction_reshaped = X_prediction.reshape(-1, num_features_prediction)
+    X_prediction_scaled = scaler.transform(X_prediction_reshaped).reshape(num_samples_prediction,
+                                                                          num_timesteps_prediction,
+                                                                          num_features_prediction)
+    return X_prediction_scaled
+
+
 def to_prediction_scaled(prediction_data, scaler):
     X_prediction = np.array(prediction_data['featuresT'])
     num_samples_prediction, num_timesteps_prediction, num_features_prediction = X_prediction.shape
