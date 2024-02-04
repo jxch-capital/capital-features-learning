@@ -38,7 +38,10 @@ def get_prediction_data(prediction_api=prod_prediction_data_url, train_config_id
 
     response = requests.request("POST", prediction_api, headers=headers, data=payload)
     json_res = response.json()
-    return json_res['knodeTrains']
+    if 'knodeTrains' in json_res:
+        return json_res['knodeTrains']
+
+    return json_res
 
 
 def get_train_data(train_api=prod_train_data_url, train_config_id=35602):
@@ -48,7 +51,10 @@ def get_train_data(train_api=prod_train_data_url, train_config_id=35602):
 
     response = requests.request("POST", train_api, headers=headers, data=payload)
     json_res = response.json()
-    return json_res['knodeTrains']
+    if 'knodeTrains' in json_res:
+        return json_res['knodeTrains']
+
+    return json_res
 
 
 def get_kline_histroy(url=prod_kline_history_url, code="SPY", start="2023-07-25",

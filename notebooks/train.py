@@ -116,14 +116,14 @@ def get_model(x_shape=5, y_shape=40, model_name="train", lr=0.001):
 
     # 创建EarlyStopping和ReduceLROnPlateau回调
     early_stopping = EarlyStopping(
-        monitor='val_loss',
+        monitor='val_accuracy',
         mode='min',
         verbose=1,
         patience=20,
         restore_best_weights=True
     )
     reduce_lr = ReduceLROnPlateau(
-        monitor='val_loss',
+        monitor='val_accuracy',
         mode='min',
         factor=0.5,
         patience=10,
