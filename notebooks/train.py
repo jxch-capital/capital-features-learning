@@ -17,8 +17,8 @@ import json
 
 def to_dataset(train_data, validation_data, Y_train, Y_val, batch=64):
     scaler = StandardScaler()
-    X_train = np.array(train_data['features'])
-    X_val = np.array(validation_data['features'])
+    X_train = np.array(train_data)
+    X_val = np.array(validation_data)
     # 获取形状信息
     num_samples, num_timesteps, num_features = X_train.shape
     # 将三维特征数组重塑为二维
@@ -52,7 +52,7 @@ def to_prediction_scaled_by_arr(X_prediction, scaler):
 
 
 def to_prediction_scaled(prediction_data, scaler):
-    X_prediction = np.array(prediction_data['features'])
+    X_prediction = np.array(prediction_data)
     num_samples_prediction, num_timesteps_prediction, num_features_prediction = X_prediction.shape
     X_prediction_reshaped = X_prediction.reshape(-1, num_features_prediction)
     X_prediction_scaled = scaler.transform(X_prediction_reshaped).reshape(num_samples_prediction,
@@ -116,20 +116,22 @@ def get_model(x_shape=5, y_shape=40, model_name="train", lr=0.001):
 
     # 创建EarlyStopping和ReduceLROnPlateau回调
     early_stopping = EarlyStopping(
-        monitor='val_accuracy',
+        monitor='val_loss',
         mode='min',
         verbose=1,
         patience=20,
         restore_best_weights=True
     )
     reduce_lr = ReduceLROnPlateau(
-        monitor='val_accuracy',
+        monitor='val_loss',
         mode='min',
         factor=0.5,
-        patience=10,
+        patience=4,
         min_lr=1e-6,
         verbose=1
     )
+
+    csv_logger = CSVLogger('./log/' + model_name + '.csv', append=True)
 
     # 创建ModelCheckpoint回调
     model_checkpoint = ModelCheckpoint(
@@ -142,7 +144,7 @@ def get_model(x_shape=5, y_shape=40, model_name="train", lr=0.001):
     )
 
     # 返回模型和回调列表
-    return model, [early_stopping, reduce_lr, model_checkpoint]
+    return model, [early_stopping, reduce_lr, model_checkpoint, csv_logger]
 
 
 def save_scaler(scaler, path):
