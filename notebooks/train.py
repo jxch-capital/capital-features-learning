@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization, InputLayer, GRU
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, CSVLogger
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import regularizers
 import numpy as np
